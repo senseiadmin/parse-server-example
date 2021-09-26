@@ -6,6 +6,7 @@ const ParseServer = require('parse-server').ParseServer;
 const path = require('path');
 const args = process.argv || [];
 const test = args.some(arg => arg.includes('jasmine'));
+var ParseDashboard = require('parse-dashboard');
 
 const databaseUri = process.env.DATABASE_URI || process.env.MONGODB_URI;
 
@@ -59,7 +60,36 @@ if (!test) {
   ParseServer.createLiveQueryServer(httpServer);
 }
 
+// Set up parse dashboard
+var dashboard = new ParseDashboard({
+  "apps": [{
+      "serverURL": 'https://parse-server-example-8p4hf.ondigitalocean.app/parse', // Not localhost
+      "appId": 'sensei_dev',
+      "masterKey": 'tempk',
+      "appName": "Sensei Dev",
+      "production": false
+  }],
+    "users": [
+    {
+      "user":"temi",
+      "pass":"Password1"
+    }
+  ]
+});
+
+var dashApp = express();
+
+// make the Parse Dashboard available at /dashboard
+dashApp.use('/dashboard', dashboard);
+
+// Parse Server plays nicely with the rest of your web routes
+var httpServerDash = require('http').createServer(dashApp);
+httpServerDash.listen(8080, function() {
+    console.log('dashboard-server running on port 8080.');
+});
+
 module.exports = {
   app,
   config,
+  dashApp
 };
